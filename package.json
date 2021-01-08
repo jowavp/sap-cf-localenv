@@ -1,6 +1,6 @@
 {
   "name": "sap-cf-localenv",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Configure local environment for testing SAP Cloud Foundry Applications",
   "main": "dist/index.js",
   "bin": "dist/index.js",
