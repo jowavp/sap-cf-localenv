@@ -15,50 +15,64 @@ const mta: MtaStructure = YAML.parse(mtaFile)
 
 console.log(`Starting to configure your environment for application ${mta.ID}`);
 
-const createJsonFile = (module: MtaModule, fileName: "default-env" | "default-services", data: any) => {
-    if(!data) return;
-    if (!fs.existsSync(`./${module.path}`)){
+const createJsonFile = (module: MtaModule, fileName: "default-env" | "default-services" | "default-vcapfile", data: any) => {
+    if (!data) return;
+    if (!fs.existsSync(`./${module.path}`)) {
         fs.mkdirSync(`./${module.path}`);
     }
     console.log(`${fileName} generated for ${module.name}`)
-    if( module.provides ){
-        fs.writeFileSync(`./${fileName}.json`, JSON.stringify(data, null, '\t') );
+    if (module.provides) {
+        fs.writeFileSync(`./${fileName}.json`, JSON.stringify(data, null, '\t'));
     }
-    fs.writeFileSync(`./${module.path}/${fileName}.json`, JSON.stringify(data, null, '\t') );
+    fs.writeFileSync(`./${module.path}/${fileName}.json`, JSON.stringify(data, null, '\t'));
+    if (module.path === "approuter" && fs.existsSync('./localApprouter')) {
+        fs.writeFileSync(`./localApprouter/${fileName}.json`, JSON.stringify(data, null, '\t'));
+        console.log(`${fileName} generated for localApprouter`)
+    }
 }
 
 // get the different modules in the mta
-mta.modules.filter( (module) => module.type.indexOf('nodejs') > -1 )
+mta.modules.filter((module) => module.type.indexOf('nodejs') > -1)
     .forEach(
-    (module) => {
-        const VCAP = cf.getVCAP_SERVICES(module.name);
-        
-        const defaultServices = 
-            Object.values(VCAP.VCAP_SERVICES).reduce<any>(
-                (acc, [service]: any) => {
-                    acc[service.label] = service.credentials;
-                    if( service.label === 'xsuaa') {
-                        acc['uaa'] = service.credentials;
-                    }
+        (module) => {
+            const VCAP = cf.getVCAP_SERVICES(module.name);
+
+            const defaultServices =
+                Object.values(VCAP.VCAP_SERVICES).reduce<any>(
+                    (acc, [service]: any) => {
+                        acc[service.label] = service.credentials;
+                        if (service.label === 'xsuaa') {
+                            acc['uaa'] = service.credentials;
+                        }
+                        return acc;
+                    }, {}
+                );
+
+            createJsonFile(module, "default-services", defaultServices)
+
+            const defaultEnv = (module.requires || []).filter(req => req.group === 'destinations').reduce<DefaultEnv | null>(
+                (acc, req) => {
+                    if (!acc) acc = {};
+                    if (!acc.destinations) acc.destinations = [];
+                    // write a default-env.json file
+                    req.properties.url = req.properties.url.replace('~{url}', 'http://localhost:4004');
+                    acc.destinations.push(req.properties);
                     return acc;
-                }, {}
+                }, null
             );
 
-        createJsonFile(module, "default-services", defaultServices)        
-        
-        const defaultEnv = (module.requires || []).filter( req => req.group === 'destinations' ).reduce<DefaultEnv | null>(
-            (acc, req) => {
-                if(!acc) acc = {};
-                if(!acc.destinations)acc.destinations = [];
-                // write a default-env.json file
-                req.properties.url = req.properties.url.replace('~{url}', 'http://localhost:4004');
-                acc.destinations.push(req.properties);
-                return acc;
-            }, null
-        );
-        
-        createJsonFile(module, "default-env", defaultEnv)    
-    }
-)
-   
+            createJsonFile(module, "default-env", defaultEnv)
 
+            // if the module is bound to an instance of the objectstore service, also generate a default-vcapfile.json
+            let objectStoreResource = mta.resources.find(resource => module.requires.map(require => require.name).includes(resource.name) && resource.type === "objectstore");
+            if (objectStoreResource) {
+                const defaultVcap = {
+                    "services": {
+                        "objectstore": VCAP.VCAP_SERVICES.objectstore
+                    }
+                }
+                createJsonFile(module, "default-vcapfile", defaultVcap)
+            }
+
+        }
+    )

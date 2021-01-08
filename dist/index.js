@@ -1,10 +1,22 @@
 #!/usr/bin/env node
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
     return result;
 };
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -32,6 +44,10 @@ const createJsonFile = (module, fileName, data) => {
         fs.writeFileSync(`./${fileName}.json`, JSON.stringify(data, null, '\t'));
     }
     fs.writeFileSync(`./${module.path}/${fileName}.json`, JSON.stringify(data, null, '\t'));
+    if (module.path === "approuter" && fs.existsSync('./localApprouter')) {
+        fs.writeFileSync(`./localApprouter/${fileName}.json`, JSON.stringify(data, null, '\t'));
+        console.log(`${fileName} generated for localApprouter`);
+    }
 };
 // get the different modules in the mta
 mta.modules.filter((module) => module.type.indexOf('nodejs') > -1)
@@ -56,5 +72,15 @@ mta.modules.filter((module) => module.type.indexOf('nodejs') > -1)
         return acc;
     }, null);
     createJsonFile(module, "default-env", defaultEnv);
+    // if the module is bound to an instance of the objectstore service, also generate a default-vcapfile.json
+    let objectStoreResource = mta.resources.find(resource => module.requires.map(require => require.name).includes(resource.name) && resource.type === "objectstore");
+    if (objectStoreResource) {
+        const defaultVcap = {
+            "services": {
+                "objectstore": VCAP.VCAP_SERVICES.objectstore
+            }
+        };
+        createJsonFile(module, "default-vcapfile", defaultVcap);
+    }
 });
 //# sourceMappingURL=index.js.map

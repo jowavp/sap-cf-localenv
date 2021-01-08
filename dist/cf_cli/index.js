@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getVCAP_SERVICES = exports.getTarget = void 0;
 const child_process_1 = require("child_process");
 function getTarget() {
     const targetBuffer = child_process_1.execSync('cf target');
