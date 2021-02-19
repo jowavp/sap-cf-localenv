@@ -5,5 +5,6 @@ export interface DefaultEnv {
         strictSSL: boolean;
         url: string;
     }[],
+    VCAP_SERVICES?: any
     PORT?: number
 }

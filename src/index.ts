@@ -50,13 +50,19 @@ mta.modules.filter((module) => module.type.indexOf('nodejs') > -1)
 
             createJsonFile(module, "default-services", defaultServices)
 
-            const defaultEnv = (module.requires || []).filter(req => req.group === 'destinations').reduce<DefaultEnv | null>(
+            const defaultEnv = (module.requires || []).reduce<DefaultEnv | null | undefined>(
                 (acc, req) => {
+                    const resource = mta.resources.find(x => x.name === req.name);
                     if (!acc) acc = {};
-                    if (!acc.destinations) acc.destinations = [];
-                    // write a default-env.json file
-                    req.properties.url = req.properties.url.replace('~{url}', 'http://localhost:4004');
-                    acc.destinations.push(req.properties);
+                    if (req.group && req.group === 'destinations') {
+                        if (!acc.destinations) acc.destinations = [];
+                        // write a default-env.json file
+                        req.properties.url = req.properties.url.replace('~{url}', 'http://localhost:4004');
+                        acc.destinations.push(req.properties);
+                    } else if (resource && resource.type === 'com.sap.xs.hdi-container') {
+                        if (!acc.VCAP_SERVICES) acc.VCAP_SERVICES = [];
+                        acc.VCAP_SERVICES = VCAP.VCAP_SERVICES;
+                    }
                     return acc;
                 }, null
             );
