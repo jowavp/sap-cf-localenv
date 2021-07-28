@@ -19,6 +19,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -51,8 +60,8 @@ const createJsonFile = (module, fileName, data) => {
 };
 // get the different modules in the mta
 mta.modules.filter((module) => module.type.indexOf('nodejs') > -1)
-    .forEach((module) => {
-    const VCAP = cf.getVCAP_SERVICES(module.name);
+    .forEach((module) => __awaiter(void 0, void 0, void 0, function* () {
+    const VCAP = yield cf.getVCAP_SERVICES(target.org, module.name);
     const defaultServices = Object.values(VCAP.VCAP_SERVICES).reduce((acc, [service]) => {
         acc[service.label] = service.credentials;
         if (service.label === 'xsuaa') {
@@ -92,5 +101,5 @@ mta.modules.filter((module) => module.type.indexOf('nodejs') > -1)
         };
         createJsonFile(module, "default-vcapfile", defaultVcap);
     }
-});
+}));
 //# sourceMappingURL=index.js.map
