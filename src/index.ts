@@ -34,8 +34,8 @@ const createJsonFile = (module: MtaModule, fileName: "default-env" | "default-se
 // get the different modules in the mta
 mta.modules.filter((module) => module.type.indexOf('nodejs') > -1)
     .forEach(
-        (module) => {
-            const VCAP = cf.getVCAP_SERVICES(module.name);
+        async (module) => {
+            const VCAP = await cf.getVCAP_SERVICES(target.org, module.name);
 
             const defaultServices =
                 Object.values(VCAP.VCAP_SERVICES).reduce<any>(
