@@ -8,11 +8,11 @@ Only use LTS versions of [nodejs](https://nodejs.org/en/download)
 
 The [Node Version Manager](https://github.com/nvm-sh/nvm) `nvm` is recommended for install and switching between versions
 
-## Installation of sap-cf-localenv
+## Installation of sap-cf-localenv globally
 using npm:
 
 ```bash
-npm install sap-cf-localenv
+npm install -g sap-cf-localenv
 ```
 
 ## Generate the default-*.json files
