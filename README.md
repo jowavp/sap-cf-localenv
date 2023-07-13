@@ -8,12 +8,12 @@ These default-*.json files will be used to connect to remote services like UAA, 
 using npm:
 
 ```bash
-$ npm install -s sap-cf-localenv
+npm install sap-cf-localenv
 ```
 
 ## Generate the default-*.json files
 In the root directory of your project, where your mta.yaml file is located, run following command:
 
 ```bash
-$ sap-cf-localenv
+sap-cf-localenv
 ```
